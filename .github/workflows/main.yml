@@ -3,48 +3,21 @@ name: Build APK
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up JDK 17
+    - uses: actions/checkout@v4
+    - name: Setup JDK
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-        
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      
-    - name: Grant execute permission for gradlew
+    - name: Make gradlew executable
       run: chmod +x gradlew
-      
-    - name: Check Gradle version
-      run: ./gradlew --version
-      
-    - name: List files
-      run: ls -la
-      
-    - name: List gradle wrapper
-      run: ls -la gradle/wrapper/
-      
-    - name: Try to configure project only
-      run: ./gradlew projects --no-daemon --stacktrace
-      
-    - name: Build with timeout
-      run: timeout 10m ./gradlew assembleDebug --no-daemon --stacktrace || echo "Build timed out"
-      
-    - name: Upload APK if exists
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/app-debug.apk
-      if: success() || failure()
+    - name: Test Gradle
+      run: java -version && ls -la gradle/wrapper/
+    - name: Build APK
+      run: ./gradlew assembleDebug
