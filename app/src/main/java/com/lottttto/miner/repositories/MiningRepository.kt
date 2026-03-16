@@ -33,7 +33,7 @@ interface MiningRepository {
 @Singleton
 class MiningRepositoryImpl @Inject constructor(
     private val workManager: WorkManager,
-    @ApplicationContext private val context: Context,
+    private val context: Context, // без @ApplicationContext
     private val settingsRepository: SettingsRepositoryImpl
 ) : MiningRepository {
 
@@ -105,7 +105,6 @@ class MiningRepositoryImpl @Inject constructor(
             val status = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS)
             status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
         } else {
-            // For older APIs, we use a registered receiver (deprecated but works)
             val batteryStatus = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
             val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
             status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
