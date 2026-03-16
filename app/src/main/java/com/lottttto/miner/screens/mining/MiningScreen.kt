@@ -5,13 +5,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lottttto.miner.components.StatRow
 import com.lottttto.miner.models.CoinType
 import com.lottttto.miner.models.MiningMode
-import com.lottttto.miner.viewmodels.MiningViewModel
+import com.lottttto.miner.viewmodels.MiningViewModel   // <-- добавлен импорт
 import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
