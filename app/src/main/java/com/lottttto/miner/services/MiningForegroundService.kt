@@ -8,7 +8,6 @@ import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.lottttto.miner.MainActivity
-import com.lottttto.miner.R
 import com.lottttto.miner.utils.BatteryOptimizationHelper
 import com.lottttto.miner.utils.NativeMinerLib
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,11 +39,8 @@ class MiningForegroundService : Service() {
                 putExtra("workerName", workerName)
                 putExtra("algo", algo)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
+            else context.startService(intent)
         }
 
         fun stop(context: Context) {
@@ -74,17 +70,9 @@ class MiningForegroundService : Service() {
         miningJob = serviceScope.launch {
             nativeMinerLib.startMining(poolUrl, walletAddress, workerName, "x", algo, 1)
             while (isRunning) {
-                if (BatteryOptimizationHelper.getBatteryLevel(this@MiningForegroundService) < 15) {
-                    stopMining("Low battery")
-                }
-                if (BatteryOptimizationHelper.isOverheated(this@MiningForegroundService, 35f)) {
-                    stopMining("Overheat")
-                }
-                updateNotification(
-                    nativeMinerLib.getHashrate(),
-                    nativeMinerLib.getAcceptedShares(),
-                    nativeMinerLib.getRejectedShares()
-                )
+                if (BatteryOptimizationHelper.getBatteryLevel(this@MiningForegroundService) < 15) stopMining("Low battery")
+                if (BatteryOptimizationHelper.isOverheated(this@MiningForegroundService, 35f)) stopMining("Overheat")
+                updateNotification(nativeMinerLib.getHashrate(), nativeMinerLib.getAcceptedShares(), nativeMinerLib.getRejectedShares())
                 wakeLock?.acquire(10 * 60 * 1000L)
                 delay(5000)
             }
@@ -95,56 +83,33 @@ class MiningForegroundService : Service() {
         if (!isRunning) return
         isRunning = false
         nativeMinerLib.stopMining()
-        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-            .notify(NOTIFICATION_ID, createNotification("Mining stopped", reason))
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID, createNotification("Mining stopped", reason))
         stopSelf()
     }
 
     private fun updateNotification(hashrate: Double, accepted: Long, rejected: Long) {
-        val notification = createNotification(
-            "%.2f H/s".format(hashrate),
-            "A:$accepted R:$rejected"
-        )
-        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-            .notify(NOTIFICATION_ID, notification)
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID, createNotification("%.2f H/s".format(hashrate), "A:$accepted R:$rejected"))
     }
 
     private fun createNotification(title: String, content: String): Notification {
         val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(title)
-            .setContentText(content)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentIntent(pendingIntent)
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+            .setContentTitle(title).setContentText(content).setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentIntent(pendingIntent).setOngoing(true).setPriority(NotificationCompat.PRIORITY_LOW).build()
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Mining",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Mining process notifications"
-                setSound(null, null)
-                enableLights(false)
-                enableVibration(false)
+            val channel = NotificationChannel(CHANNEL_ID, "Mining", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "Mining process notifications"; setSound(null, null); enableLights(false); enableVibration(false)
             }
             (getSystemService(NotificationManager::class.java)).createNotificationChannel(channel)
         }
     }
 
     private fun acquireWakeLock() {
-        wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager)
-            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Lottttto:MiningWakeLock")
-            .apply { setReferenceCounted(false) }
+        wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Lottttto:MiningWakeLock").apply { setReferenceCounted(false) }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
