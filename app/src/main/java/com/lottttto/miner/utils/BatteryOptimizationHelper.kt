@@ -16,10 +16,7 @@ object BatteryOptimizationHelper {
 
     fun requestIgnoreBatteryOptimizations(activity: android.app.Activity) {
         if (!isIgnoringBatteryOptimizations(activity)) {
-            val intent = Intent(
-                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                Uri.parse("package:${activity.packageName}")
-            )
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${activity.packageName}"))
             activity.startActivity(intent)
         }
     }
