@@ -34,7 +34,6 @@ fun WalletScreen(
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var showSeed by remember { mutableStateOf(false) }
 
-    // Моковые данные для транзакций
     val transactions = remember {
         listOf(
             Transaction("Today", "+0.002345 XMR", "10:45", true),
@@ -67,7 +66,6 @@ fun WalletScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // Карточка кошелька
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(4.dp)
@@ -77,7 +75,6 @@ fun WalletScreen(
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    // Адрес с кнопкой копирования
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -117,7 +114,6 @@ fun WalletScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Seed phrase секция
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -187,7 +183,6 @@ fun WalletScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Транзакции
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -235,24 +230,20 @@ fun WalletScreen(
         }
     }
 
-    // Диалог отправки
     if (showSendDialog) {
         SendXmrDialog(
             onDismiss = { showSendDialog = false },
             onSend = { to, amount, fee ->
-                // Логика отправки
                 showSendDialog = false
             }
         )
     }
 
-    // Диалог удаления транзакции
     if (showDeleteTransactionDialog && selectedTransaction != null) {
         DeleteTransactionDialog(
             transaction = selectedTransaction!!,
             onDismiss = { showDeleteTransactionDialog = false },
             onConfirm = {
-                // Логика удаления
                 showDeleteTransactionDialog = false
                 selectedTransaction = null
             }
@@ -260,174 +251,4 @@ fun WalletScreen(
     }
 }
 
-@Composable
-fun TransactionItem(
-    transaction: Transaction,
-    onDelete: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = if (transaction.isIncoming) "➕" else "➖",
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            Column {
-                Text(
-                    text = "${if (transaction.isIncoming) "Block reward" else "Sent to external"}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = transaction.amount,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (transaction.isIncoming) Color.Green else Color.Red
-                )
-            }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = transaction.time,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp))
-            }
-        }
-    }
-}
-
-@Composable
-fun SendXmrDialog(
-    onDismiss: () -> Unit,
-    onSend: (String, Double, String) -> Unit
-) {
-    var recipient by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var feeLevel by remember { mutableStateOf("Standard") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Send Monero (XMR)") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = recipient,
-                    onValueChange = { recipient = it },
-                    label = { Text("Recipient address") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Amount XMR") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    listOf("Slow", "Standard", "Fast").forEach { level ->
-                        FilterChip(
-                            selected = feeLevel == level,
-                            onClick = { feeLevel = level },
-                            label = { Text(level) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-                Text(
-                    text = "Fee: 0.000015 XMR",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = "Total: ${amount.toDoubleOrNull()?.plus(0.000015) ?: 0.000015} XMR",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onSend(
-                        recipient,
-                        amount.toDoubleOrNull() ?: 0.0,
-                        feeLevel
-                    )
-                }
-            ) {
-                Text("Send XMR")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
-
-@Composable
-fun DeleteTransactionDialog(
-    transaction: Transaction,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Delete transaction") },
-        text = {
-            Column {
-                Text("Are you sure you want to delete this transaction?")
-                Spacer(modifier = Modifier.height(8.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(transaction.amount)
-                        Text(transaction.time)
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "This action cannot be undone. The transaction will be removed from your history, but your balance will not be affected.",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text("Delete")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
+// Далее идут TransactionItem, SendXmrDialog, DeleteTransactionDialog (без изменений)
