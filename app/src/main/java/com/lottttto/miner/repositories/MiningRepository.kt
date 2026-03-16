@@ -2,6 +2,7 @@ package com.lottttto.miner.repositories
 
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.BatteryManager
@@ -104,7 +105,8 @@ class MiningRepositoryImpl @Inject constructor(
             val status = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS)
             status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
         } else {
-            val batteryStatus = context.registerReceiver(null, Intent.ACTION_BATTERY_CHANGED)
+            // For older APIs, we use a registered receiver (deprecated but works)
+            val batteryStatus = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
             val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
             status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
         }
@@ -113,7 +115,7 @@ class MiningRepositoryImpl @Inject constructor(
         val batteryLevel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
         } else {
-            val batteryStatus = context.registerReceiver(null, Intent.ACTION_BATTERY_CHANGED)
+            val batteryStatus = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
             val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) ?: 0
             val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, 100) ?: 100
             level * 100 / scale
